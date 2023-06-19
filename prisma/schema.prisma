@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator dbml {
+  provider            = "prisma-dbml-generator"
+  output              = "./dbml"
+  outputName          = "donation-tracker-model.dbml"
+  projectName         = "Donation Tracker"
+  projectDatabaseType = "PostgreSQL"
+  projectNote         = "Donation Tracker"
+}
+
+generator docs {
+  provider = "node node_modules/prisma-docs-generator"
+  output   = "./docs"
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  walletAddress Bytes?  @unique
+  profileImage  String?
+
+  organizations Organization[] @relation("UserOrganization")
+}
+
+model Organization {
+  id              Int      @id @default(autoincrement())
+  name            String
+  email           String   @unique
+  description     String
+  profileImage    String?
+  contractAddress Bytes   @unique
+  isVerified      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  users           User[]   @relation("UserOrganization")
+
+  donatedItems  Transaction[] @relation("TransactionToOrganization")
+  receivedItems Transaction[] @relation("TransactionToDonee")
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  amount      Float
+  txHash      Bytes  @unique
+  description String
+  status      Status   @default(PENDING)
+  createdAt   DateTime @default(now())
+  donorId     Int
+  doneeId     Int
+  updatedAt   DateTime @updatedAt
+  isApproved  Boolean  @default(false)
+
+  donor Organization @relation("TransactionToOrganization", fields: [donorId], references: [id])
+  donee Organization @relation("TransactionToDonee", fields: [doneeId], references: [id])
+
+}
+
+model Report {
+  id                 Int    @id @default(autoincrement())
+  txHash             Bytes @unique
+  totalBeneficiaries Int
+  details            String
+  adminCostPercent   Int
+  gender_m           Int
+  gender_f           Int
+  gender_o           Int
+  age                Json
+  bank_y             Int
+  bank_n             Int
+  internet_y         Int
+  internet_n         Int
+  phone_y            Int
+  phone_n            Int
+  photos             Json
+  benTxHash          Json
+
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
