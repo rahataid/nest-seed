@@ -1,1 +1,5 @@
-export class User {}
+import { ROLES } from 'src/config';
+
+export class User {
+  roles: ROLES[];
+}
